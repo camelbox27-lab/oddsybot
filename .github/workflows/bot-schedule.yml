@@ -1,0 +1,36 @@
+name: Oddsybot Daily Run
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Her gün 09:00 UTC (12:00 TR)
+  workflow_dispatch:  # Manuel çalıştırma butonu
+
+jobs:
+  run-bots:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        
+    - name: Run all bots
+      run: |
+        python main.py
+        
+    - name: Upload results
+      uses: actions/upload-artifact@v3
+      with:
+        name: bot-results
+        path: |
+          filtered/*.json
+          filtered/*.xlsx
+        retention-days: 7
