@@ -1,0 +1,13 @@
+services:
+  - type: cron
+    name: oddsybot
+    env: python
+    runtime: python-3.11
+    schedule: "0 9 * * *"  # Her gün 09:00 UTC (Türkiye 12:00)
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    
+    # Ortam değişkenleri (Render dashboard'dan eklenecek)
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
