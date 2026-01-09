@@ -1,12 +1,10 @@
 name: Oddsybot Daily Run
 on:
   schedule:
-    - cron: '0 9 * * *'  # Her gün 09:00 UTC (12:00 TR)
-  workflow_dispatch:  # Manuel çalıştırma butonu
-
+    - cron: '0 9 * * *'
+  workflow_dispatch:
 permissions:
-  contents: write  # Git push için gerekli
-
+  contents: write
 jobs:
   run-bots:
     runs-on: ubuntu-latest
@@ -37,8 +35,8 @@ jobs:
     - name: Copy JSONs to docs
       run: |
         mkdir -p docs
-        cp filtered/*.json docs/ || echo "No JSON files found"
-        ls -la filtered/
+        cp merged/merged_json/*.json docs/ || echo "No merged JSON files"
+        cp filtered/*.json docs/ || echo "No filtered JSON files"
         ls -la docs/
         
     - name: Commit and push JSONs
@@ -47,26 +45,14 @@ jobs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        if [ -n "$(ls -A docs/*.json 2>/dev/null)" ]; then
-          git add docs/*.json
-          git commit -m "JSON guncellendi [skip ci]" || echo "No changes"
-          git push
-        else
-          echo "⚠️ No JSON files in docs/"
-        fi
+        git add docs/*.json
+        git commit -m "JSON güncellendi [skip ci]" || echo "No changes"
+        git push
         
     - name: Upload results
       uses: actions/upload-artifact@v4
       with:
         name: bot-results
         path: |
-          filtered/*.json
-          filtered/*.xlsx
+          docs/*.json
         retention-days: 7
-        
-    - name: Deploy to Firebase Storage
-      env:
-        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-      run: |
-        npm install -g firebase-tools
-        firebase deploy --only storage --token $FIREBASE_TOKEN
