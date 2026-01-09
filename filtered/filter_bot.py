@@ -8,7 +8,7 @@ def filter_matches():
     today = datetime.now().strftime("%d.%m.%Y")
     
     # Merged klasöründeki tüm JSON dosyalarını bul
-    merged_files = glob.glob("C:/bot/merged/merged_json/*.json")
+    merged_files = glob.glob("merged_json/*.json")
     
     if not merged_files:
         print(f"❌ Merged klasöründe JSON bulunamadı!")
@@ -27,15 +27,15 @@ def filter_matches():
     
     print(f"✅ {len(all_matches)} maç yüklendi")
     
-    # İLK YARI GOL LİSTESİ - ORAN YOK
+    # İLK YARI GOL LİSTESİ
     ilk_yari_gol_listesi = []
     for match in all_matches:
         oran = match.get('beraberlik_orani')
         if oran and 3.50 <= oran <= 8.00:
             ilk_yari_gol_listesi.append({
-                "home_team": match['home_team'],
-                "away_team": match['away_team'],
-                "saat": match['saat']
+                "home_team": match.get('home_team', ''),
+                "away_team": match.get('away_team', ''),
+                "saat": match.get('saat', '')
             })
     
     # GÜNÜN TERCİHLERİ
@@ -47,8 +47,9 @@ def filter_matches():
         oran = match.get('beraberlik_orani')
         if oran in ust_25_oranlari and match.get('2_5_ust'):
             gunun_tercihleri.append({
-                "home_team": match['home_team'],
-                "away_team": match['away_team'],
+                "home_team": match.get('home_team', ''),
+                "away_team": match.get('away_team', ''),
+                "saat": match.get('saat', ''),
                 "kategori": "2.5 Üst",
                 "2_5_ust": match['2_5_ust']
             })
@@ -59,8 +60,9 @@ def filter_matches():
         oran = match.get('beraberlik_orani')
         if oran in ust_35_oranlari and match.get('3_5_ust'):
             gunun_tercihleri.append({
-                "home_team": match['home_team'],
-                "away_team": match['away_team'],
+                "home_team": match.get('home_team', ''),
+                "away_team": match.get('away_team', ''),
+                "saat": match.get('saat', ''),
                 "kategori": "3.5 Üst",
                 "3_5_ust": match['3_5_ust']
             })
@@ -73,18 +75,19 @@ def filter_matches():
         oran = match.get('beraberlik_orani')
         if oran in surpriz_oranlari and match.get('ms_5_5_ust'):
             gunun_surprizleri.append({
-                "home_team": match['home_team'],
-                "away_team": match['away_team'],
+                "home_team": match.get('home_team', ''),
+                "away_team": match.get('away_team', ''),
+                "saat": match.get('saat', ''),
                 "kategori": "MS 5.5 Üst",
                 "ms_5_5_ust": match['ms_5_5_ust']
             })
     
     # Kaydet (JSON + Excel)
-    output_dir = "C:/bot/filtered"
+    output_dir = "filtered"
     os.makedirs(output_dir, exist_ok=True)
     
-    # İlk Yarı Gol Listesi
-    with open(f"{output_dir}/ilk_yari_gol_listesi_{today}.json", 'w', encoding='utf-8') as f:
+    # İlk Yarı Gol Listesi - SABİT İSİM
+    with open(f"{output_dir}/ilk-yari-gol.json", 'w', encoding='utf-8') as f:
         json.dump({
             "category": "İlk Yarı Gol Listesi",
             "matches": ilk_yari_gol_listesi
@@ -94,8 +97,8 @@ def filter_matches():
         df = pd.DataFrame(ilk_yari_gol_listesi)
         df.to_excel(f"{output_dir}/ilk_yari_gol_listesi_{today}.xlsx", index=False)
     
-    # Günün Tercihleri
-    with open(f"{output_dir}/gunun_tercihleri_{today}.json", 'w', encoding='utf-8') as f:
+    # Günün Tercihleri - SABİT İSİM
+    with open(f"{output_dir}/gunun-tercihleri.json", 'w', encoding='utf-8') as f:
         json.dump({
             "category": "Günün Tercihleri",
             "matches": gunun_tercihleri
@@ -105,8 +108,8 @@ def filter_matches():
         df = pd.DataFrame(gunun_tercihleri)
         df.to_excel(f"{output_dir}/gunun_tercihleri_{today}.xlsx", index=False)
     
-    # Günün Sürprizleri
-    with open(f"{output_dir}/gunun_surprizleri_{today}.json", 'w', encoding='utf-8') as f:
+    # Günün Sürprizleri - SABİT İSİM
+    with open(f"{output_dir}/gunun-surprizleri.json", 'w', encoding='utf-8') as f:
         json.dump({
             "category": "Günün Sürprizleri",
             "matches": gunun_surprizleri
