@@ -36,7 +36,10 @@ jobs:
         
     - name: Copy JSONs to docs
       run: |
-        cp filtered/*.json docs/
+        mkdir -p docs
+        cp filtered/*.json docs/ || echo "No JSON files found"
+        ls -la filtered/
+        ls -la docs/
         
     - name: Commit and push JSONs
       env:
