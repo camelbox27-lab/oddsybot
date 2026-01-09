@@ -1,20 +1,8 @@
 {
   "date": "Sayfa2",
-  "timestamp": "2026-01-09T11:14:32.134777",
-  "total_merged": 5,
+  "timestamp": "2026-01-09T14:34:34.397657",
+  "total_merged": 4,
   "matches": [
-    {
-      "event_id": 14138462,
-      "date_time": "2026-01-09 14:30:00",
-      "home_team": "Van Spor Fk",
-      "away_team": "Boluspor",
-      "saat": "",
-      "beraberlik_orani": 3.4,
-      "kg_var": 1.53,
-      "2_5_ust": 1.74,
-      "3_5_ust": 1.21,
-      "ms_5_5_ust": 13.15
-    },
     {
       "event_id": 14138471,
       "date_time": "2026-01-09 20:00:00",
