@@ -1,3 +1,9 @@
+import os
+
+# Klasörleri oluştur
+os.makedirs('filtered', exist_ok=True)
+os.makedirs('merged_json', exist_ok=True)
+os.makedirs('docs', exist_ok=True)
 import subprocess
 import os
 
