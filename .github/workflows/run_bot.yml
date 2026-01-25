@@ -1,0 +1,72 @@
+name: Run OddsBot Analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      bot_type:
+        description: 'Bot Type (main/stats)'
+        required: true
+        default: 'main'
+        type: choice
+        options:
+        - main
+        - stats
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install Chrome & Dependencies
+      run: |
+        # Chrome kurulumu
+        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        
+        # Python kütüphaneleri
+        pip install -r requirements.txt
+        pip install requests pandas openpyxl selenium webdriver-manager firebase-admin
+
+    - name: Create Firebase Key File
+      env:
+        FIREBASE_KEY_JSON: ${{ secrets.FIREBASE_KEY }}
+      run: |
+        # GitHub Secret'tan key dosyasını oluştur
+        echo "$FIREBASE_KEY_JSON" > firebase-key.json
+        # İstatistik klasörü için de kopyala
+        cp firebase-key.json istatistik/firebase-key.json
+
+    - name: Run Main Bot Pipeline
+      if: ${{ inputs.bot_type == 'main' }}
+      run: |
+        python main.py
+
+    - name: Run Statistics Bot Pipeline
+      if: ${{ inputs.bot_type == 'stats' }}
+      run: |
+        cd istatistik
+        python main.py
+
+    - name: Upload Artifacts (Optional)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: bot-results
+        path: |
+          filtered/*.json
+          filtered/*.xlsx
+          istatistik/output/*.json
+          sofascore_matches_*.json
+          sofascore_matches_*.xlsx

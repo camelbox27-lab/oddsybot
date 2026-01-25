@@ -1,58 +1,67 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
-import { Play, Terminal, Activity, Cpu } from 'lucide-react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { Play, Terminal, Activity, Cpu, Github } from 'lucide-react-native';
 
-// Localtunnel adresi (İnternet üzerinden erişim sağlar)
-const API_BASE = 'https://sour-yaks-fall.loca.lt';
+// ==========================================
+// AYARLAR (Burayı KENDİ BİLGİLERİNLE Doldur)
+// ==========================================
+const DEFAULT_REPO = 'camelbox27-lab/oddsybot'; // Repo Adı
+const DEFAULT_TOKEN = ''; // <-- TOKEN'I BURAYA YAPIŞTIR (örn: 'ghp_Ax7...')
+// ==========================================
 
 export default function App() {
+  // Varsayılan Değerler
+  const [repoName, setRepoName] = useState(DEFAULT_REPO);
+  const [githubToken, setGithubToken] = useState(DEFAULT_TOKEN);
+
   const [running, setRunning] = useState(null);
-  const [logs, setLogs] = useState(['ODDSY Global Console Hazır.']);
-  const [status, setStatus] = useState('checking');
-
-  useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/status`);
-        if (res.ok) setStatus('online');
-        else setStatus('offline');
-      } catch (err) {
-        setStatus('offline');
-      }
-    };
-
-    checkStatus();
-    const interval = setInterval(checkStatus, 10000); // 10 saniyede bir kontrol
-    return () => clearInterval(interval);
-  }, []);
+  const [logs, setLogs] = useState(['GitHub Actions Konsolu Hazır.']);
 
   const addLog = (m) => {
     setLogs(p => [...p.slice(-4), `> ${new Date().toLocaleTimeString()}: ${m}`]);
   };
 
   const runBot = async (type) => {
-    if (running || status === 'offline') return;
+    if (!repoName || !githubToken) {
+      Alert.alert("Eksik Bilgi", "Lütfen Repo Adı ve GitHub Token (PAT) girin.");
+      return;
+    }
+    if (running) return;
 
     setRunning(type);
-    addLog(`Başlatılıyor: ${type === 'oran' ? 'Oran Analiz' : 'Kart/Korner Analiz'}...`);
+    addLog(`GitHub Action Tetikleniyor: ${type === 'main' ? 'Ana Bot' : 'İstatistik'}...`);
 
     try {
-      const endpoint = type === 'oran' ? '/api/run-oran' : '/api/run-kart-korner';
-      const res = await fetch(`${API_BASE}${endpoint}`, {
+      // GitHub API Dispatch Endpoint
+      const url = `https://api.github.com/repos/${repoName}/actions/workflows/run_bot.yml/dispatches`;
+
+      const payload = {
+        ref: 'main', // veya 'master', hangi branch'te çalışıyorsan
+        inputs: {
+          bot_type: type // 'main' veya 'stats'
+        }
+      };
+
+      const res = await fetch(url, {
         method: 'POST',
         headers: {
-          'Bypass-Tunnel-Reminder': 'true' // Localtunnel uyarı sayfasını geçmek için
-        }
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `Bearer ${githubToken}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'OddsBot-Mobile'
+        },
+        body: JSON.stringify(payload)
       });
-      const data = await res.json();
 
-      if (data.success) {
-        addLog(`${type === 'oran' ? 'Oran' : 'Kart/Korner'} analizi tamamlandı.`);
+      if (res.status === 204) {
+        addLog(`✅ BAŞARILI: Action tetiklendi! GitHub'dan izleyebilirsiniz.`);
+        addLog(`(Yaklaşık 30-60sn içinde başlar)`);
       } else {
-        addLog(`HATA: ${data.message || 'Bilinmeyen hata'}`);
+        const errData = await res.json();
+        addLog(`❌ HATA: ${errData.message || 'Yetki veya Repo hatası'}`);
       }
     } catch (err) {
-      addLog('Bağlantı hatası! Sunucu internete açık mı?');
+      addLog(`❌ Bağlantı hatası: ${err.message}`);
     } finally {
       setRunning(null);
     }
@@ -64,54 +73,83 @@ export default function App() {
 
       <View style={styles.header}>
         <Text style={styles.logo}>ODDSY</Text>
-        <Text style={styles.subtitle}>GLOBAL KONTROL MERKEZİ</Text>
+        <Text style={styles.subtitle}>GITHUB ACTION YÖNETİCİSİ</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.statusSection}>
-          <View style={[styles.statusDot, { backgroundColor: status === 'online' ? '#4ade80' : '#f87171' }]} />
-          <Text style={styles.statusText}>SUNUCU (GLOBAL): {status.toUpperCase()}</Text>
+
+        {/* GITHUB AYAR ALANI */}
+        <View style={styles.inputSection}>
+          <Text style={styles.inputLabel}>GITHUB REPO (kullanici/repo)</Text>
+          <View style={styles.inputContainer}>
+            <Github color="#94a3b8" size={20} />
+            <TextInput
+              style={styles.input}
+              placeholder="camelbox27-lab/oddsybot"
+              placeholderTextColor="#475569"
+              value={repoName}
+              onChangeText={setRepoName}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+        </View>
+
+        <View style={styles.inputSection}>
+          <Text style={styles.inputLabel}>GITHUB TOKEN (PAT - Workflow Yetkili)</Text>
+          <View style={styles.inputContainer}>
+            <Terminal color="#94a3b8" size={20} />
+            <TextInput
+              style={styles.input}
+              placeholder="ghp_xxxxxxxxxxxx"
+              placeholderTextColor="#475569"
+              value={githubToken}
+              onChangeText={setGithubToken}
+              autoCapitalize="none"
+              secureTextEntry
+            />
+          </View>
         </View>
 
         <TouchableOpacity
-          style={[styles.card, (running === 'oran' || status === 'offline') && styles.cardDisabled]}
-          onPress={() => runBot('oran')}
-          disabled={running !== null || status === 'offline'}
+          style={[styles.card, running === 'main' && styles.cardDisabled]}
+          onPress={() => runBot('main')}
+          disabled={running !== null}
         >
           <View style={styles.cardHeader}>
             <Cpu color="#fbbf24" size={24} />
-            <Text style={styles.cardTitle}>Oran Analiz</Text>
+            <Text style={styles.cardTitle}>Ana Bot Başlat</Text>
           </View>
-          <Text style={styles.cardDesc}>Python botunu internet üzerinden çalıştırarak güncel oran analizlerini başlatır.</Text>
+          <Text style={styles.cardDesc}>GitHub sunucularında (ubuntu) Ana Botu (Sofa, Oran, Excel) çalıştırır.</Text>
           <View style={[styles.button, { backgroundColor: '#059669' }]}>
-            {running === 'oran' ? (
+            {running === 'main' ? (
               <ActivityIndicator color="white" />
             ) : (
               <>
                 <Play color="white" size={18} fill="white" />
-                <Text style={styles.buttonText}>ANALİZİ BAŞLAT</Text>
+                <Text style={styles.buttonText}>TETİKLE (MAIN)</Text>
               </>
             )}
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.card, (running === 'kart' || status === 'offline') && styles.cardDisabled]}
-          onPress={() => runBot('kart')}
-          disabled={running !== null || status === 'offline'}
+          style={[styles.card, running === 'stats' && styles.cardDisabled]}
+          onPress={() => runBot('stats')}
+          disabled={running !== null}
         >
           <View style={styles.cardHeader}>
             <Activity color="#60a5fa" size={24} />
-            <Text style={styles.cardTitle}>Kart / Korner</Text>
+            <Text style={styles.cardTitle}>İstatistik Başlat</Text>
           </View>
-          <Text style={styles.cardDesc}>İstatistik scriptini internet üzerinden çalıştırarak kart ve korner verilerini günceller.</Text>
+          <Text style={styles.cardDesc}>GitHub sunucularında İstatistik (Scraper, Kart/Korner) botunu çalıştırır.</Text>
           <View style={[styles.button, { backgroundColor: '#1d4ed8' }]}>
-            {running === 'kart' ? (
+            {running === 'stats' ? (
               <ActivityIndicator color="white" />
             ) : (
               <>
                 <Play color="white" size={18} fill="white" />
-                <Text style={styles.buttonText}>ANALİZİ BAŞLAT</Text>
+                <Text style={styles.buttonText}>TETİKLE (STATS)</Text>
               </>
             )}
           </View>
@@ -120,12 +158,11 @@ export default function App() {
         <View style={styles.console}>
           <View style={styles.consoleHeader}>
             <Terminal color="#94a3b8" size={14} />
-            <Text style={styles.consoleHeaderText}>SİSTEM LOGLARI</Text>
+            <Text style={styles.consoleHeaderText}>LOGLAR</Text>
           </View>
           {logs.map((log, i) => (
             <Text key={i} style={styles.logText}>{log}</Text>
           ))}
-          <Text style={styles.infoText}>* Tünel Şifresi Gerekebilir: 176.41.51.55</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -159,26 +196,31 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
   },
-  statusSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  inputSection: {
     marginBottom: 20,
-    backgroundColor: '#061614',
-    padding: 8,
-    borderRadius: 20,
-    alignSelf: 'center',
   },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  statusText: {
-    color: '#f8fafc',
+  inputLabel: {
+    color: '#94a3b8',
     fontSize: 10,
     fontWeight: 'bold',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#061614',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 50,
+  },
+  input: {
+    flex: 1,
+    color: 'white',
+    marginLeft: 10,
+    fontSize: 14,
   },
   card: {
     backgroundColor: '#061614',
@@ -246,11 +288,6 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     fontSize: 12,
     marginBottom: 4,
-  },
-  infoText: {
-    color: '#475569',
-    fontSize: 10,
-    marginTop: 10,
-    fontStyle: 'italic'
   }
 });
+
