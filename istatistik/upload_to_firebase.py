@@ -15,22 +15,12 @@ except ImportError:
     exit(1)
 
 # Dosya yolları
-BASE_DIR = Path(r"C:\istatistik\output")
+BASE_DIR = Path("output")
 KORNER_FILE = BASE_DIR / "korner.json"
 KART_FILE = BASE_DIR / "kart.json"
 
 def initialize_firebase():
     """Firebase'i başlat"""
-    # Firebase config dosyasını kontrol et
-    config_path = Path(r"C:\Users\AyberkEylülKemal\Desktop\TahminApp\web-version\src\firebaseConfig.js")
-    
-    if not config_path.exists():
-        print("❌ firebaseConfig.js bulunamadı!")
-        print("Manuel olarak Firebase Admin SDK key'i indir:")
-        print("1. Firebase Console > Project Settings > Service Accounts")
-        print("2. 'Generate New Private Key' butonuna tıkla")
-        print("3. İndirilen JSON'u 'firebase-key.json' olarak kaydet")
-        exit(1)
     
     # Service account key dosyası
     key_path = Path("firebase-key.json")
@@ -38,10 +28,15 @@ def initialize_firebase():
     if not key_path.exists():
         print("❌ firebase-key.json bulunamadı!")
         print("\n📝 Yapılacaklar:")
-        print("1. https://console.firebase.google.com/project/oddsy-xxxx/settings/serviceaccounts/adminsdk")
-        print("2. 'Generate New Private Key' > İndir")
-        print("3. Dosyayı 'firebase-key.json' olarak kaydet (script ile aynı klasörde)")
-        exit(1)
+        print("1. GitHub Secrets > FIREBASE_KEY ekle")
+        print("2. Dosyayı 'firebase-key.json' olarak kaydet")
+        # Eğer serviceAccountKey varsa onu dene (yerel testler için)
+        if Path("serviceAccountKey.json").exists():
+            print("   (serviceAccountKey.json bulundu, o kullanılıyor...)")
+            key_path = Path("serviceAccountKey.json")
+        else:
+            exit(1)
+
     
     try:
         cred = credentials.Certificate(str(key_path))
