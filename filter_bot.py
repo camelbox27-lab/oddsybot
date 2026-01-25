@@ -9,9 +9,19 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 
 # Firebase başlat
-cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
+# Firebase başlat
+if os.path.exists("firebase-key.json"):
+    cred = credentials.Certificate("firebase-key.json")
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+else:
+    print("⚠️ UYARI: firebase-key.json bulunamadı! Firebase işlemleri atlanacak.")
+    if os.path.exists("serviceAccountKey.json"):
+         print("   (serviceAccountKey.json bulundu, o kullanılıyor...)")
+         cred = credentials.Certificate("serviceAccountKey.json")
+         firebase_admin.initialize_app(cred)
+         db = firestore.client()
+
 
 def filter_matches():
     today = datetime.now().strftime("%d.%m.%Y")
