@@ -18,7 +18,8 @@ except ImportError:
     exit(1)
 
 # Klasör yolları
-BASE_DIR = Path(r"C:\istatistik")
+# Klasör yolları
+BASE_DIR = Path.cwd()
 KORNER_DIR = BASE_DIR / "korner"
 KART_DIR = BASE_DIR / "kart"
 OUTPUT_DIR = BASE_DIR / "output"
