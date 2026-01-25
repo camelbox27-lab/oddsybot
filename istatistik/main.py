@@ -80,11 +80,12 @@ def main():
     results['scraper'] = run_script("scraper.py")
     
     if not results['scraper']:
-        print("\n⚠️ Scraping başarısız, devam edilsin mi? (e/h)")
-        choice = input().lower()
-        if choice != 'e':
-            print("❌ İşlem kullanıcı tarafından durduruldu.")
-            return
+        print("\n⚠️ Scraping başarısız oldu!")
+        # CI ortamında user input beklenmemeli, o yüzden direkt devam edilmeli mi yoksa durmalı mı?
+        # Kullanıcı "PC kapalı" dediği için muhtemelen gözetimsiz çalışması lazım. 
+        # Scraping olmazsa diğer adımlar da olmaz, o yüzden çıkmak mantıklı.
+        print("❌ Scraping başarısız olduğu için diğer adımlar iptal ediliyor.")
+        return
     
     time.sleep(2)
     
