@@ -1,0 +1,36 @@
+name: Futbol Pipeline
+
+on:
+  schedule:
+    - cron: '0 6 0 * *'  # Her gün 09:00 (UTC+3)
+  workflow_dispatch:  # Manuel tetikleme
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Create Firebase key file
+        run: |
+          echo '${{ secrets.FIREBASE_KEY }}' > serviceAccountKey.json
+      
+      - name: Run main pipeline
+        run: python main.py
+      
+      - name: Run istatistik pipeline
+        run: python istatistik/main.py
+      
+      - name: Cleanup
+        run: rm -f serviceAccountKey.json

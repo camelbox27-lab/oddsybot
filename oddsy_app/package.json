@@ -1,0 +1,23 @@
+{
+    "name": "oddsy-mobile-control",
+    "version": "1.0.0",
+    "description": "Mobile control center for Oddsy bots",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "vite",
+        "build": "vite build",
+        "serve": "vite preview"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "cors": "^2.8.5",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "lucide-react": "^0.263.1"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-react": "^4.0.3",
+        "vite": "^4.4.5"
+    }
+}

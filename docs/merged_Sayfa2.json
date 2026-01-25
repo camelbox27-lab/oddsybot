@@ -1,0 +1,67 @@
+{
+  "date": "Sayfa2",
+  "timestamp": "2026-01-25T09:28:28.151726",
+  "total_merged": 5,
+  "matches": [
+    {
+      "event_id": 14138462,
+      "date_time": "2026-01-09 14:30:00",
+      "home_team": "Van Spor Fk",
+      "away_team": "Boluspor",
+      "saat": "",
+      "beraberlik_orani": 3.4,
+      "kg_var": 1.53,
+      "2_5_ust": 1.74,
+      "3_5_ust": 1.21,
+      "ms_5_5_ust": 13.15
+    },
+    {
+      "event_id": 14138471,
+      "date_time": "2026-01-09 20:00:00",
+      "home_team": "Amed Sk",
+      "away_team": "Çorum",
+      "saat": "",
+      "beraberlik_orani": 3.5,
+      "kg_var": 1.57,
+      "2_5_ust": 1.77,
+      "3_5_ust": 1.23,
+      "ms_5_5_ust": 12.5
+    },
+    {
+      "event_id": 14062141,
+      "date_time": "2026-01-09 22:30:00",
+      "home_team": "E.Frankfurt",
+      "away_team": "B.Dortmund",
+      "saat": "",
+      "beraberlik_orani": 3.8,
+      "kg_var": 1.4,
+      "2_5_ust": 1.99,
+      "3_5_ust": 1.33,
+      "ms_5_5_ust": 9.07
+    },
+    {
+      "event_id": 14035427,
+      "date_time": "2026-01-09 22:45:00",
+      "home_team": "Ross County",
+      "away_team": "Partick Thistle",
+      "saat": "",
+      "beraberlik_orani": 3.25,
+      "kg_var": 1.53,
+      "2_5_ust": 1.63,
+      "3_5_ust": 1.17,
+      "ms_5_5_ust": 13.95
+    },
+    {
+      "event_id": 14083212,
+      "date_time": "2026-01-09 23:00:00",
+      "home_team": "Getafe",
+      "away_team": "Real Sociedad",
+      "saat": "",
+      "beraberlik_orani": 2.9,
+      "kg_var": 2.22,
+      "2_5_ust": 1.21,
+      "3_5_ust": 1.0,
+      "ms_5_5_ust": 35.0
+    }
+  ]
+}
