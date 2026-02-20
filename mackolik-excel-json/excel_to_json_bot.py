@@ -1,260 +1,235 @@
-import pandas as pd
-import json
-from datetime import datetime
-import os
-import glob
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Mackolik Ham Excel (Y) → Sadeleştirilmiş Excel (X) + JSON dönüştürücü
 
-class ExcelToJsonConverter:
-    def __init__(self, excel_folder=".", output_folder="json_output"):
-        self.excel_folder = excel_folder
-        self.output_folder = output_folder
-        
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
-            print(f"📁 '{output_folder}' klasörü oluşturuldu")
-    
-    def clean_team_name(self, name):
-        if pd.isna(name):
-            return ""
-        return str(name).strip()
-    
-    def clean_odd(self, value):
-        if pd.isna(value) or value == '' or value == 0:
-            return None
+Y Excel sütunları:
+  1: saat, 2: lig, 6: ev sahibi, 7: misafir
+  10: MS 1, 11: MS X, 12: MS 2
+  21: KG Var, 22: KG Yok
+  28: 2.5 Alt, 29: 2.5 Üst
+  30: 3.5 Alt, 31: 3.5 Üst
+  32: 4.5 Alt, 33: 4.5 Üst
+  Satır 3: tarih, Satır 4+: maç verileri
+"""
+import openpyxl
+from openpyxl import Workbook
+import json
+import os
+import sys
+from datetime import datetime
+
+# Windows encoding fix
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
+
+def safe_float(val):
+    """Değeri float'a çevir, başarısızsa 0 döndür."""
+    if val is None or val == '-' or val == '' or val == 0:
+        return 0.0
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def find_input_file():
+    """mackolik-excel-json klasöründe gunlukmaclar.xlsx dosyasını bul."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    target = os.path.join(script_dir, 'gunlukmaclar.xlsx')
+    if os.path.exists(target):
+        return target
+
+    # Alternatif: klasördeki herhangi bir xlsx (json_output hariç)
+    for f in os.listdir(script_dir):
+        if f.endswith('.xlsx') and f != 'gunlukmaclar.xlsx':
+            full = os.path.join(script_dir, f)
+            if os.path.isfile(full):
+                return full
+
+    return None
+
+
+def convert(input_file, output_dir):
+    """Y Excel → X Excel + JSON dönüşümü yapar."""
+    print(f"📂 Okuyor: {input_file}")
+
+    wb_kaynak = openpyxl.load_workbook(input_file)
+    ws_kaynak = wb_kaynak.active
+
+    print(f"✓ {ws_kaynak.max_row} satır, {ws_kaynak.max_column} sütun")
+
+    # Tarih bilgisini al (satır 3, sütun 1)
+    raw_date = ws_kaynak.cell(3, 1).value
+    if isinstance(raw_date, datetime):
+        date_str = raw_date.strftime('%d.%m.%Y')
+    elif raw_date:
+        date_str = str(raw_date).split(' ')[0]
+        # YYYY-MM-DD formatını DD.MM.YYYY'ye çevir
         try:
-            if isinstance(value, str):
-                value = value.replace(',', '.')
-            return float(value)
-        except:
-            return None
-    
-    def extract_date_from_sheet(self, sheet_name, filename):
-        """Sheet veya dosya adından tarihi çıkar"""
-        # Önce sheet adına bak
-        if any(char.isdigit() for char in sheet_name):
-            # Sheet adında tarih varsa (örn: "09.01.2026")
-            parts = sheet_name.strip().split('.')
-            if len(parts) == 3:
-                try:
-                    # Tarihi doğrula
-                    datetime.strptime(sheet_name.strip(), '%d.%m.%Y')
-                    return sheet_name.strip()
-                except:
-                    pass
-        
-        # Sheet adında tarih yoksa dosya adına bak
-        base_name = os.path.basename(filename)
-        date_str = base_name.replace('.xlsx', '').replace('.xls', '')
-        
-        # Dosya adı tarih formatında mı kontrol et
-        parts = date_str.split('.')
-        if len(parts) == 3:
-            try:
-                datetime.strptime(date_str, '%d.%m.%Y')
-                return date_str
-            except:
-                pass
-        
-        # Hiçbiri yoksa bugünün tarihini kullan
-        return datetime.now().strftime('%d.%m.%Y')
-    
-    def parse_sheet(self, df, sheet_name=""):
-        try:
-            print(f"📊 '{sheet_name}' - Toplam {len(df)} satır bulundu")
-            
-            matches = []
-            
-            for index, row in df.iterrows():
-                try:
-                    # İlk sütunları ada göre al
-                    home_team = self.clean_team_name(row.iloc[0] if len(row) > 0 else '')
-                    away_team = self.clean_team_name(row.iloc[1] if len(row) > 1 else '')
-                    
-                    if not home_team or not away_team:
-                        continue
-                    
-                    match_data = {
-                        'home_team': home_team,
-                        'away_team': away_team,
-                        'saat': str(row.iloc[12] if len(row) > 12 else ''),  # Saat sütunu
-                        'lig': '',
-                        
-                        # MS oranları (C, D, E)
-                        'ms_1': self.clean_odd(row.iloc[2] if len(row) > 2 else None),
-                        'ms_x': self.clean_odd(row.iloc[3] if len(row) > 3 else None),
-                        'ms_2': self.clean_odd(row.iloc[4] if len(row) > 4 else None),
-                        
-                        # Karşılıklı Gol (F, G)
-                        'kg_var': self.clean_odd(row.iloc[5] if len(row) > 5 else None),
-                        'kg_yok': self.clean_odd(row.iloc[6] if len(row) > 6 else None),
-                        
-                        # 2.5 (H=Alt, I=Üst)
-                        'alt_2_5': self.clean_odd(row.iloc[7] if len(row) > 7 else None),
-                        'ust_2_5': self.clean_odd(row.iloc[8] if len(row) > 8 else None),
-                        
-                        # 3.5 (J=Alt, K=Üst)
-                        'alt_3_5': self.clean_odd(row.iloc[9] if len(row) > 9 else None),
-                        'ust_3_5': self.clean_odd(row.iloc[10] if len(row) > 10 else None),
-                        
-                        # 5.5 (L)
-                        'ust_5_5': self.clean_odd(row.iloc[11] if len(row) > 11 else None),
-                        'alt_5_5': None,
-                        
-                        '1x': None,
-                        '12': None,
-                        'x2': None,
-                        
-                        'iy_ms_1': None,
-                        'iy_ms_x': None,
-                        'iy_ms_2': None,
-                    }
-                    
-                    matches.append(match_data)
-                
-                except Exception as e:
-                    print(f"⚠️ Satır {index + 1} hatası: {e}")
-                    continue
-            
-            print(f"✅ {len(matches)} maç başarıyla parse edildi")
-            return matches
-        
-        except Exception as e:
-            print(f"❌ Sheet okuma hatası: {e}")
-            return []
-    
-    def save_json(self, matches, date_str):
-        try:
-            output = {
-                'date': date_str,
-                'timestamp': datetime.now().isoformat(),
-                'total_matches': len(matches),
-                'matches': matches
-            }
-            
-            # Dosya adını tarih olarak kaydet
-            json_filename = f"{date_str}.json"
-            json_path = os.path.join(self.output_folder, json_filename)
-            
-            with open(json_path, 'w', encoding='utf-8') as f:
-                json.dump(output, f, ensure_ascii=False, indent=2)
-            
-            print(f"💾 JSON kaydedildi: {json_path}")
-            return True
-        
-        except Exception as e:
-            print(f"❌ JSON kaydetme hatası: {e}")
-            return False
-    
-    def convert_file(self, excel_file):
-        try:
-            print(f"\n📂 '{excel_file}' işleniyor...")
-            
-            xls = pd.ExcelFile(excel_file)
-            sheet_names = xls.sheet_names
-            
-            print(f"📋 {len(sheet_names)} sheet bulundu: {sheet_names}")
-            
-            success_count = 0
-            
-            for sheet_name in sheet_names:
-                try:
-                    # 2. satırdan itibaren oku (ilk satır birleşik başlık)
-                    df = pd.read_excel(excel_file, sheet_name=sheet_name, header=1)
-                    
-                    # Tarihi akıllıca çıkar
-                    date_str = self.extract_date_from_sheet(sheet_name, excel_file)
-                    print(f"📅 Tespit edilen tarih: {date_str}")
-                    
-                    matches = self.parse_sheet(df, sheet_name)
-                    
-                    if matches:
-                        if self.save_json(matches, date_str):
-                            success_count += 1
-                    
-                    print("-" * 60)
-                
-                except Exception as e:
-                    print(f"⚠️ Sheet '{sheet_name}' hatası: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    continue
-            
-            print(f"✅ {success_count}/{len(sheet_names)} sheet başarıyla dönüştürüldü!\n")
-            return success_count > 0
-        
-        except Exception as e:
-            print(f"❌ Excel dosyası okuma hatası: {e}")
-            return False
-    
-    def convert_all_files(self):
-        try:
-            excel_files = glob.glob(os.path.join(self.excel_folder, "*.xlsx"))
-            excel_files += glob.glob(os.path.join(self.excel_folder, "*.xls"))
-            
-            if not excel_files:
-                print(f"⚠️ '{self.excel_folder}' klasöründe Excel dosyası bulunamadı!")
-                return
-            
-            print(f"\n🔍 {len(excel_files)} Excel dosyası bulundu")
-            print("=" * 80)
-            
-            total_success = 0
-            for excel_file in excel_files:
-                if self.convert_file(excel_file):
-                    total_success += 1
-            
-            print("=" * 80)
-            print(f"🎉 TOPLAM: {total_success}/{len(excel_files)} Excel dosyası başarıyla işlendi!")
-            
-            json_files = glob.glob(os.path.join(self.output_folder, "*.json"))
-            if json_files:
-                print(f"\n📄 Oluşturulan JSON dosyaları ({len(json_files)} adet):")
-                for json_file in sorted(json_files):
-                    print(f"   ✓ {os.path.basename(json_file)}")
-        
-        except Exception as e:
-            print(f"❌ Toplu dönüştürme hatası: {e}")
-    
-    def display_sample_data(self, json_file):
-        try:
-            with open(json_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            
-            print("\n" + "=" * 80)
-            print(f"📋 ÖRNEK VERİ: {os.path.basename(json_file)}")
-            print("=" * 80)
-            print(f"📅 Tarih: {data['date']}")
-            print(f"⚽ Toplam Maç: {data['total_matches']}")
-            print("\n🏆 İLK 3 MAÇ:")
-            
-            for i, match in enumerate(data['matches'][:3], 1):
-                print(f"\n  {i}. {match['home_team']} vs {match['away_team']}")
-                print(f"     ⏰ {match['saat']}")
-                print(f"     MS: 1={match['ms_1']} X={match['ms_x']} 2={match['ms_2']}")
-                print(f"     2.5: Üst={match['ust_2_5']} Alt={match['alt_2_5']}")
-                print(f"     3.5: Üst={match['ust_3_5']} Alt={match['alt_3_5']}")
-        
-        except Exception as e:
-            print(f"❌ Veri gösterme hatası: {e}")
+            dt = datetime.strptime(date_str, '%Y-%m-%d')
+            date_str = dt.strftime('%d.%m.%Y')
+        except ValueError:
+            pass
+    else:
+        date_str = datetime.now().strftime('%d.%m.%Y')
+
+    print(f"📅 Tarih: {date_str}")
+
+    # output klasörünü oluştur
+    os.makedirs(output_dir, exist_ok=True)
+
+    # ===== X Excel oluştur =====
+    wb_yeni = Workbook()
+    ws_yeni = wb_yeni.active
+
+    # Başlık satırı 1
+    ws_yeni['A1'] = 'Home'
+    ws_yeni['B1'] = 'Away'
+    ws_yeni['C1'] = 1
+    ws_yeni['D1'] = 0
+    ws_yeni['E1'] = 2
+    ws_yeni['F1'] = 'Karsılıklı Gol'
+    ws_yeni['H1'] = '2.5 üst'
+    ws_yeni['J1'] = '3.5 üst'
+    ws_yeni['L1'] = '5.5üst'
+
+    # Başlık satırı 2
+    ws_yeni['A2'] = 'Ev Sahibi'
+    ws_yeni['B2'] = 'Misafir'
+    ws_yeni['C2'] = 1.00
+    ws_yeni['D2'] = 0.00
+    ws_yeni['E2'] = 2.00
+    ws_yeni['F2'] = 'Var'
+    ws_yeni['G2'] = 'Yok'
+    ws_yeni['H2'] = 'Alt'
+    ws_yeni['I2'] = 'Üst'
+    ws_yeni['J2'] = 'Alt'
+    ws_yeni['K2'] = 'Üst'
+    ws_yeni['L2'] = '5.5üst'
+
+    # ===== JSON verisi =====
+    matches_json = []
+
+    # Veriyi dönüştür (satır 4'ten başla, 3 tarih satırı)
+    yeni_satir = 3
+    for satir in range(4, ws_kaynak.max_row + 1):
+        ev_sahibi = ws_kaynak.cell(satir, 6).value   # F: Ev Sahibi
+        misafir = ws_kaynak.cell(satir, 7).value      # G: Misafir
+
+        if not ev_sahibi or not misafir:
+            continue
+
+        ev_sahibi = str(ev_sahibi).strip()
+        misafir = str(misafir).strip()
+
+        if not ev_sahibi or not misafir:
+            continue
+
+        # Saat bilgisi
+        saat_raw = ws_kaynak.cell(satir, 1).value
+        if hasattr(saat_raw, 'strftime'):
+            saat = saat_raw.strftime('%H:%M')
+        elif saat_raw:
+            saat = str(saat_raw).split(':')[0] + ':' + str(saat_raw).split(':')[1] if ':' in str(saat_raw) else str(saat_raw)
+        else:
+            saat = ''
+
+        # Oranları oku
+        ms_1 = safe_float(ws_kaynak.cell(satir, 10).value)    # J: MS 1
+        ms_x = safe_float(ws_kaynak.cell(satir, 11).value)    # K: MS X
+        ms_2 = safe_float(ws_kaynak.cell(satir, 12).value)    # L: MS 2
+        kg_var = safe_float(ws_kaynak.cell(satir, 21).value)   # U: KG Var
+        kg_yok = safe_float(ws_kaynak.cell(satir, 22).value)   # V: KG Yok
+        alt_2_5 = safe_float(ws_kaynak.cell(satir, 28).value)  # 2.5 Alt
+        ust_2_5 = safe_float(ws_kaynak.cell(satir, 29).value)  # 2.5 Üst
+        alt_3_5 = safe_float(ws_kaynak.cell(satir, 30).value)  # 3.5 Alt
+        ust_3_5 = safe_float(ws_kaynak.cell(satir, 31).value)  # 3.5 Üst
+        ust_5_5 = safe_float(ws_kaynak.cell(satir, 33).value)  # 4.5 Üst (en yakın 5.5'e)
+
+        # X Excel'e yaz
+        ws_yeni.cell(yeni_satir, 1, ev_sahibi)    # A: Home
+        ws_yeni.cell(yeni_satir, 2, misafir)       # B: Away
+        ws_yeni.cell(yeni_satir, 3, ms_1)          # C: 1
+        ws_yeni.cell(yeni_satir, 4, ms_x)          # D: X
+        ws_yeni.cell(yeni_satir, 5, ms_2)          # E: 2
+        ws_yeni.cell(yeni_satir, 6, kg_var)        # F: KG Var
+        ws_yeni.cell(yeni_satir, 7, kg_yok)        # G: KG Yok
+        ws_yeni.cell(yeni_satir, 8, alt_2_5)       # H: 2.5 Alt
+        ws_yeni.cell(yeni_satir, 9, ust_2_5)       # I: 2.5 Üst
+        ws_yeni.cell(yeni_satir, 10, alt_3_5)      # J: 3.5 Alt
+        ws_yeni.cell(yeni_satir, 11, ust_3_5)      # K: 3.5 Üst
+        ws_yeni.cell(yeni_satir, 12, ust_5_5)      # L: 5.5 Üst
+
+        yeni_satir += 1
+
+        # JSON'a ekle
+        matches_json.append({
+            'home_team': ev_sahibi,
+            'away_team': misafir,
+            'saat': saat,
+            'ms_1': ms_1,
+            'ms_x': ms_x,
+            'ms_2': ms_2,
+            'kg_var': kg_var,
+            'kg_yok': kg_yok,
+            'ust_2_5': ust_2_5,
+            'alt_2_5': alt_2_5,
+            'ust_3_5': ust_3_5,
+            'alt_3_5': alt_3_5,
+            'ust_5_5': ust_5_5
+        })
+
+    mac_sayisi = yeni_satir - 3
+
+    # X Excel kaydet
+    excel_output = os.path.join(output_dir, f"{date_str.replace('.', '')}.xlsx")
+    wb_yeni.save(excel_output)
+    print(f"📊 Excel kaydedildi: {excel_output} ({mac_sayisi} maç)")
+
+    # JSON kaydet
+    json_data = {
+        'date': date_str,
+        'total_matches': mac_sayisi,
+        'matches': matches_json
+    }
+
+    json_output = os.path.join(output_dir, f"{date_str.replace('.', '')}.json")
+    with open(json_output, 'w', encoding='utf-8') as f:
+        json.dump(json_data, f, ensure_ascii=False, indent=2)
+
+    print(f"📋 JSON kaydedildi: {json_output} ({mac_sayisi} maç)")
+    print(f"✅ {mac_sayisi} maç başarıyla işlendi!")
+
+    return True
+
 
 def main():
-    print("\n" + "=" * 80)
-    print("🤖 EXCEL → JSON OTOMATİK DÖNÜŞTÜRÜCÜ BOT (INDEX BAZLI)")
-    print("=" * 80)
-    print("📂 Excel Klasörü: Mevcut klasör (.)")
-    print("📂 JSON Klasörü: json_output/")
-    print("=" * 80)
-    
-    converter = ExcelToJsonConverter(
-        excel_folder=".",
-        output_folder="json_output"
-    )
-    
-    converter.convert_all_files()
-    
-    json_files = sorted(glob.glob(os.path.join(converter.output_folder, "*.json")))
-    if json_files:
-        converter.display_sample_data(json_files[0])
+    print("\n" + "=" * 60)
+    print("  📊 MACKOLIK EXCEL → JSON DÖNÜŞTÜRÜCÜ")
+    print("=" * 60)
+
+    # Input dosyasını bul
+    if len(sys.argv) >= 2:
+        input_file = sys.argv[1]
+    else:
+        input_file = find_input_file()
+
+    if not input_file or not os.path.exists(input_file):
+        print("❌ gunlukmaclar.xlsx bulunamadı!")
+        print("   Lütfen dosyayı mackolik-excel-json klasörüne koyun.")
+        sys.exit(1)
+
+    # Output klasörü
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_dir = os.path.join(script_dir, 'json_output')
+
+    success = convert(input_file, output_dir)
+
+    if not success:
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -192,8 +192,6 @@ class MatchMergerBot:
                             '2_5_ust': mackolik_match.get('ust_2_5'),
                             '3_5_ust': mackolik_match.get('ust_3_5'),
                             'ms_5_5_ust': mackolik_match.get('ust_5_5'),
-                            'iy_kg_var': mackolik_match.get('iy_kg_var'),
-                            'iy_kg_yok': mackolik_match.get('iy_kg_yok'),
                         }
                         
                         merged_matches.append(merged_match)
