@@ -10,7 +10,8 @@ Adimlar:
   4. Verileri Birlestir   (merged/match_merger_bot.py)
   5. Eski Verileri Temizle (clean.py)
   6. Filtrele + JSON Kaydet (filter_bot.py)  
-  7. Git Push (oddsy-data reposuna)
+  7. Kart & Korner Istatistik (istatistik/main.py)
+  8. Git Push (oddsy-data reposuna)
 
 NOT: Firebase KULLANILMAZ. Veriler JSON olarak oddsy-data reposuna push edilir.
      Frontend bu JSON'lari GitHub raw URL'lerinden ceker.
@@ -74,12 +75,13 @@ def main():
 
     # Pipeline adimlari: (isim, script, calisma_dizini)
     steps = [
-        ("1/6: ORAN DUSEN MACLAR",      "dropping_odds_bot.py", BASE_DIR),
-        ("2/6: SOFASCORE VERILERI",      "bet365data.py",        os.path.join(BASE_DIR, "sofa")),
-        ("3/6: MACKOLIK VERILERI",       "guncel_bulten.py",     BASE_DIR),
-        ("4/6: VERILERI BIRLESTIR",      "match_merger_bot.py",  os.path.join(BASE_DIR, "merged")),
-        ("5/6: ESKI VERILERI TEMİZLE",   "clean.py",             BASE_DIR),
-        ("6/6: FILTRELE + JSON KAYDET",  "filter_bot.py",        BASE_DIR),
+        ("1/7: ORAN DUSEN MACLAR",      "dropping_odds_bot.py", BASE_DIR),
+        ("2/7: SOFASCORE VERILERI",      "bet365data.py",        os.path.join(BASE_DIR, "sofa")),
+        ("3/7: MACKOLIK VERILERI",       "guncel_bulten.py",     BASE_DIR),
+        ("4/7: VERILERI BIRLESTIR",      "match_merger_bot.py",  os.path.join(BASE_DIR, "merged")),
+        ("5/7: ESKI VERILERI TEMİZLE",   "clean.py",             BASE_DIR),
+        ("6/7: FILTRELE + JSON KAYDET",  "filter_bot.py",        BASE_DIR),
+        ("7/7: KART & KORNER VERILERI",  "main.py",              os.path.join(BASE_DIR, "istatistik")),
     ]
 
     results = []
@@ -105,7 +107,7 @@ def main():
         print("\n[WARN] Bazi adimlar basarisiz oldu.")
 
     # --- GIT PUSH (oddsy-data reposuna) ---
-    print_header("7/7: GIT PUSH (oddsy-data reposuna)")
+    print_header("8/8: GIT PUSH (oddsy-data reposuna)")
 
     if os.path.exists(ODDSY_DATA_DIR):
         try:

@@ -36,8 +36,9 @@ def filter_matches():
         except Exception as e:
             print(f"⚠️ Oran düşen maçlar okunamadı: {e}\n")
 
-    # Merged klasöründeki tüm JSON dosyalarını bul
-    merged_files = glob.glob(os.path.join(BASE_DIR, "merged", "merged_json", "*.json"))
+    # Sadece bugünün merged dosyasını bul (Eski dosyalar karışmasın)
+    today_merged_file = os.path.join(BASE_DIR, "merged", "merged_json", f"merged_{today}.json")
+    merged_files = [today_merged_file] if os.path.exists(today_merged_file) else []
 
     if not merged_files:
         print(f"❌ Merged klasöründe JSON bulunamadı!")

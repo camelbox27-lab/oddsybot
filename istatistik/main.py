@@ -42,11 +42,9 @@ def run_script(script_name, args=None):
         return False
 
 def check_files():
-    """Gerekli dosyaları kontrol et"""
     required_files = [
         "scraper.py",
-        "excel_to_json.py", 
-        "upload_to_firebase.py"
+        "excel_to_json.py"
     ]
     
     missing = []
@@ -101,18 +99,29 @@ def main():
     
     time.sleep(2)
     
-    # ADIM 3: Firebase Yükleme
-    print_header("ADIM 3/3: FIREBASE YÜKLEME")
-    print("☁️ Veriler Firebase'e yükleniyor...")
+    # ADIM 3: Verileri oddsy-data'ya Kopyala
+    print_header("ADIM 3/3: DOSYALARI TAŞIMA")
+    print("☁️ Veriler oddsy-data reposuna kopyalanıyor...")
     
-    # firebase-key.json kontrolü
-    if not Path("firebase-key.json").exists():
-        print("\n⚠️ firebase-key.json bulunamadı!")
-        print("Firebase yüklemesi atlanıyor...")
-        results['firebase'] = False
+    oddsy_data_dir = Path(__file__).parent.parent.parent / "oddsy-data" / "data"
+    if not oddsy_data_dir.exists():
+        print(f"\n⚠️ oddsy-data klasörü bulunamadı yol: {oddsy_data_dir}")
+        results['copy'] = False
     else:
-        results['firebase'] = run_script("upload_to_firebase.py")
-    
+        try:
+            import shutil
+            output_dir = Path("output")
+            if (output_dir / "kart.json").exists():
+                shutil.copy2(output_dir / "kart.json", oddsy_data_dir / "kart.json")
+                print("✅ kart.json başarıyla kopyalandı!")
+            if (output_dir / "korner.json").exists():
+                shutil.copy2(output_dir / "korner.json", oddsy_data_dir / "korner.json")
+                print("✅ korner.json başarıyla kopyalandı!")
+            results['copy'] = True
+        except Exception as e:
+            print(f"❌ Kopyalama hatası: {e}")
+            results['copy'] = False
+            
     # ÖZET
     print_summary(results)
 
@@ -123,7 +132,7 @@ def print_summary(results):
     steps = [
         ("Web Scraping", results.get('scraper', False)),
         ("JSON Dönüşümü", results.get('converter', False)),
-        ("Firebase Yükleme", results.get('firebase', False))
+        ("Dosya Kopyalama (Odds-Data)", results.get('copy', False))
     ]
     
     for step_name, success in steps:

@@ -122,8 +122,8 @@
     "under_1_5": null,
     "over_3_5": null,
     "under_3_5": null,
-    "btts_yes": 1.67,
-    "btts_no": 2.1
+    "btts_yes": 1.62,
+    "btts_no": 2.2
   },
   {
     "event_id": 14109819,
@@ -332,8 +332,8 @@
     "under_1_5": null,
     "over_3_5": null,
     "under_3_5": null,
-    "btts_yes": 1.83,
-    "btts_no": 1.83
+    "btts_yes": 2.0,
+    "btts_no": 1.73
   },
   {
     "event_id": 14064836,
@@ -458,8 +458,8 @@
     "under_1_5": null,
     "over_3_5": null,
     "under_3_5": null,
-    "btts_yes": 1.53,
-    "btts_no": 2.38
+    "btts_yes": 1.5,
+    "btts_no": 2.5
   },
   {
     "event_id": 14056646,
@@ -521,8 +521,8 @@
     "under_1_5": null,
     "over_3_5": null,
     "under_3_5": null,
-    "btts_yes": 1.4,
-    "btts_no": 2.75
+    "btts_yes": 1.44,
+    "btts_no": 2.62
   },
   {
     "event_id": 13984681,

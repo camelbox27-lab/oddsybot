@@ -1,6 +1,6 @@
 {
   "date": "20.02.2026",
-  "timestamp": "2026-02-20T10:41:52.800348",
+  "timestamp": "2026-02-20T11:23:01.927207",
   "total_merged": 35,
   "matches": [
     {
@@ -10,12 +10,12 @@
       "away_team": "Perth Glory",
       "saat": "11:35",
       "beraberlik_orani": 4.1,
-      "kg_var": 1.25,
-      "2_5_ust": 1.26,
-      "3_5_ust": 1.81,
-      "ms_5_5_ust": 5.56,
-      "iy_kg_var": 2.87,
-      "iy_kg_yok": 1.17
+      "kg_var": 1.27,
+      "2_5_ust": 1.27,
+      "3_5_ust": 1.87,
+      "ms_5_5_ust": 5.86,
+      "iy_kg_var": 2.98,
+      "iy_kg_yok": 1.15
     },
     {
       "event_id": 14326201,
@@ -52,11 +52,11 @@
       "away_team": "A. Salzburg",
       "saat": "20:00",
       "beraberlik_orani": 3.5,
-      "kg_var": 1.35,
-      "2_5_ust": 1.44,
-      "3_5_ust": 2.27,
+      "kg_var": 1.38,
+      "2_5_ust": 1.46,
+      "3_5_ust": 2.33,
       "ms_5_5_ust": 0.0,
-      "iy_kg_var": 3.25,
+      "iy_kg_var": 3.31,
       "iy_kg_yok": 1.07
     },
     {
@@ -94,12 +94,12 @@
       "away_team": "A. Bielefeld",
       "saat": "20:30",
       "beraberlik_orani": 3.7,
-      "kg_var": 1.48,
-      "2_5_ust": 1.56,
-      "3_5_ust": 2.58,
+      "kg_var": 1.46,
+      "2_5_ust": 1.54,
+      "3_5_ust": 2.52,
       "ms_5_5_ust": 0.0,
-      "iy_kg_var": 3.78,
-      "iy_kg_yok": 1.06
+      "iy_kg_var": 3.74,
+      "iy_kg_yok": 1.07
     },
     {
       "event_id": 14432906,
@@ -136,11 +136,11 @@
       "away_team": "Bellinzona",
       "saat": "21:30",
       "beraberlik_orani": 3.5,
-      "kg_var": 1.45,
+      "kg_var": 1.46,
       "2_5_ust": 1.56,
       "3_5_ust": 2.56,
       "ms_5_5_ust": 0.0,
-      "iy_kg_var": 3.6,
+      "iy_kg_var": 3.62,
       "iy_kg_yok": 0.0
     },
     {
@@ -178,11 +178,11 @@
       "away_team": "Clermont",
       "saat": "22:00",
       "beraberlik_orani": 3.0,
-      "kg_var": 1.72,
-      "2_5_ust": 1.98,
-      "3_5_ust": 3.74,
+      "kg_var": 1.73,
+      "2_5_ust": 2.02,
+      "3_5_ust": 3.81,
       "ms_5_5_ust": 0.0,
-      "iy_kg_var": 4.75,
+      "iy_kg_var": 4.82,
       "iy_kg_yok": 0.0
     },
     {
@@ -374,11 +374,11 @@
       "away_team": "St. Pölten",
       "saat": "22:30",
       "beraberlik_orani": 3.4,
-      "kg_var": 1.53,
-      "2_5_ust": 1.62,
-      "3_5_ust": 2.74,
+      "kg_var": 1.56,
+      "2_5_ust": 1.65,
+      "3_5_ust": 2.81,
       "ms_5_5_ust": 0.0,
-      "iy_kg_var": 3.83,
+      "iy_kg_var": 3.91,
       "iy_kg_yok": 0.0
     },
     {
@@ -402,11 +402,11 @@
       "away_team": "Hamburg",
       "saat": "22:30",
       "beraberlik_orani": 3.3,
-      "kg_var": 1.48,
+      "kg_var": 1.47,
       "2_5_ust": 1.6,
       "3_5_ust": 2.63,
       "ms_5_5_ust": 0.0,
-      "iy_kg_var": 3.82,
+      "iy_kg_var": 3.81,
       "iy_kg_yok": 1.06
     },
     {
@@ -490,7 +490,7 @@
       "2_5_ust": 2.03,
       "3_5_ust": 3.84,
       "ms_5_5_ust": 0.0,
-      "iy_kg_var": 4.86,
+      "iy_kg_var": 4.84,
       "iy_kg_yok": 0.0
     }
   ]
